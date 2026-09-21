@@ -1,113 +1,258 @@
-# UART & SPI ASIC Physical Design
+# UART + SPI ASIC Physical Design
 
-A public-facing engineering record of ASIC synthesis and physical-design work on a **configurable UART controller** and **SPI master controller** using Cadence Genus and Cadence Innovus during the SCL internship.
+> **SCL Internship · Cadence Genus + Innovus · 180 nm ASIC implementation**
 
-The two designs are intentionally maintained as separate sections:
+A public, interview-oriented record of ASIC synthesis and physical-design work on two communication-controller designs: a **configurable UART** and a **configurable SPI master**.
 
-- [`uart/`](uart/)
-- [`spi/`](spi/)
+The designs are intentionally separated into [`uart/`](uart/) and [`spi/`](spi/). Evidence-backed implementation results are kept distinct from reconstructed reference automation.
 
-> **Scope note:** The supplied evidence establishes ASIC implementation activity and reports results. This repository does not claim personal authorship of the original UART/SPI RTL unless the supplied material proves it.
+## Project snapshot
 
-## Overview
+| Design | Genus power | Innovus instances | Innovus area | Innovus power |
+|---|---:|---:|---:|---:|
+| UART | `7.39923e-05 W` | `339` | `9994.432` | `0.57686031`* |
+| SPI | `3.60721e-04 W` | `237` | `6043.072` | `0.41032857`* |
 
-The SCL internship report describes both a configurable UART controller and an SPI master controller passing through the RTL-to-GDSII implementation methodology.
+`*` The supplied report excerpt does not explicitly state the Innovus power unit; values are preserved exactly without conversion.
 
-For UART, the supplied material includes core Verilog RTL, an IO-ring definition, and Cadence/Synopsys screenshots.
+## What this repository demonstrates
 
-For SPI, the supplied material includes the implementation description and numerical Genus/Innovus results in the SCL report, but no SPI RTL/scripts/archive were supplied in this upload.
-
-## Tools & Technology
-
-- Cadence Genus — synthesis
-- Cadence Innovus — physical implementation
-- Synopsys Design Compiler / VCS — additional flow exposure documented in the internship report
-- SCL 180 nm CMOS context
-- Reported Genus technology library: `tsl18fs120_scl_ss_1`
-
-Proprietary PDKs, standard-cell/IO libraries, LEF files, and generated databases are intentionally excluded.
-
-## ASIC Flow
+- Cadence Genus RTL-to-gate synthesis methodology
+- Cadence Innovus physical implementation
+- Floorplanning and power planning concepts
+- Placement
+- Clock-tree synthesis
+- Routing
+- Post-route optimization
+- I/O pad-ring integration for UART
+- Area/power analysis
+- DRC/GDSII flow understanding
+- Professional handling of missing or proprietary implementation artifacts
 
 ![RTL-to-GDSII flow](docs/rtl-to-gdsii.svg)
 
-1. RTL
-2. Functional verification
-3. Logic synthesis
-4. Floorplanning
-5. Placement
-6. Clock-tree synthesis
-7. Routing
-8. Post-route optimization
-9. Timing / physical verification
-10. GDSII preparation
+## UART
 
-## Results At A Glance
+### Design
 
-| Design | Innovus instances | Innovus area | Genus total power | Innovus total power |
-|---|---:|---:|---:|---:|
-| UART | 339 | 9994.432 | `7.39923e-05 W` | `0.57686031` |
-| SPI | 237 | 6043.072 | `3.60721e-04 W` | `0.41032857` |
+The SCL report describes a full-duplex configurable UART composed of:
 
-**Important:** The report does not state a unit for the Innovus total-power blocks in the UART/SPI excerpts. Values are therefore preserved exactly as reported and are not converted.
+- transmitter
+- receiver
+- programmable baud-rate generation
+- receiver oversampling
+- frame-error detection
 
-Timing metrics such as WNS/TNS are not included because clean numerical values were not supplied in the report.
+The supplied public source tree retains the UART core RTL modules; the PDK-specific chip wrapper is intentionally omitted:
 
-## Repository Structure
+```text
+uart/rtl/
+├── uart_top.v
+├── uart_tx.v
+├── uart_rx.v
+└── baud_gen.v
+```
+
+### Implementation flow
+
+The report documents functional verification followed by Genus synthesis and two Innovus configurations:
+
+1. UART core without I/O pads
+2. UART with I/O pad cells for chip-level implementation
+
+Both configurations are described as undergoing CTS and post-route optimization, followed by DRC and GDSII preparation.
+
+### UART results
+
+| Metric | Reported value |
+|---|---:|
+| Genus technology library | `tsl18fs120_scl_ss_1` |
+| Genus total power | `7.39923e-05 W` |
+| Innovus instances | `339` |
+| Innovus area | `9994.432` |
+| Innovus total power | `0.57686031` |
+| IO pads | `65` |
+
+Detailed source-derived report blocks: [`reports/uart/`](reports/uart/).
+
+### UART pad ring
+
+The supplied chip-level IO definition contains **65 pads**:
+
+| Pad cell | Count |
+|---|---:|
+| `pc3d21` | 3 |
+| `pc3o02` | 11 |
+| `pc3b02` | 40 |
+| `pvdc` | 5 |
+| `pv0c` | 6 |
+| **Total** | **65** |
+
+The raw `.io` file and PDK IO LEF are intentionally not published. See [`reports/uart/io_pad_ring.md`](reports/uart/io_pad_ring.md).
+
+### UART implementation evidence
+
+![UART pad-ring implementation](images/uart/IO%20Pads%20Innovus.png)
+
+*Cadence Innovus chip-level UART pad-ring view; screenshot sanitized to remove the workstation title-bar path.*
+
+![UART Genus view](images/uart/uart_top_genus.png)
+
+![UART physical-design view](images/uart/Screenshot%20from%202026-06-24%2011-51-13.png)
+
+### UART RTL / verification evidence
+
+![UART simulation](images/uart/uart%20controller%20xcelium.png)
+
+![UART receiver](images/uart/sai_uart_rx.png)
+
+![UART transmitter](images/uart/sai_uart_tx.png)
+
+![Baud generator](images/uart/sai_baud_gen.png)
+
+## SPI
+
+### Design
+
+The SCL report describes the SPI master as a configurable synchronous serial controller with:
+
+- serial-clock generation
+- finite-state machine
+- shift register
+- bit counter
+- programmable clock divider
+- CPOL/CPHA mode support
+- full-duplex MOSI/MISO transfer
+
+### Implementation flow
+
+The report documents:
+
+```text
+RTL
+ ↓
+Cadence Genus synthesis
+ ↓
+Floorplanning
+ ↓
+Placement
+ ↓
+CTS
+ ↓
+Routing
+ ↓
+Post-route optimization
+ ↓
+Area / power analysis
+ ↓
+GDSII preparation
+```
+
+### SPI results
+
+| Metric | Reported value |
+|---|---:|
+| Genus technology library | `tsl18fs120_scl_ss_1` |
+| Genus total power | `3.60721e-04 W` |
+| Innovus instances | `237` |
+| Innovus area | `6043.072` |
+| Innovus total power | `0.41032857` |
+
+Detailed report evidence: [`reports/spi/implementation_results.md`](reports/spi/implementation_results.md).
+
+### SPI source availability
+
+The current supplied source package does **not** contain the SPI RTL or the original SPI implementation TCL. Therefore this repository does not fabricate an SPI RTL tree or claim that a reconstructed script was the original script.
+
+The architecture and measured implementation results are retained because they are explicitly documented in the SCL internship report.
+
+## Physical-design debug playbook
+
+[`docs/physical_design_debug_playbook.md`](docs/physical_design_debug_playbook.md) provides the reconstructed Innovus debug/signoff command sequence for interview discussion.
+
+## Cadence flow scripts
+
+The scripts in [`scripts/`](scripts/) are **reconstructed reference flows** based on the methodology documented in the internship report and standard Cadence command structure. They are not claimed to be the original SCL scripts.
+
+### Genus sequence
+
+```text
+read_hdl → elaborate → constraints → check_design
+        → syn_generic/syn_map/syn_opt
+        → report_timing/report_area/report_power
+        → write_hdl/write_sdc
+```
+
+### Innovus sequence
+
+```text
+init_design
+→ floorPlan / power planning
+→ placeDesign
+→ optDesign -preCTS
+→ ccopt_design
+→ optDesign -postCTS
+→ routeDesign
+→ optDesign -postRoute
+→ verify_drc / verifyConnectivity
+→ timing / area / power
+→ streamOut
+```
+
+These commands are presented as a reproducible engineering model, not as a claim about exact historical command ordering.
+
+## Timing and signoff status
+
+The supplied UART/SPI report sections do not provide clean numerical WNS/TNS/setup/hold values suitable for publication.
+
+| Design | WNS | TNS | Setup/Hold | LVS |
+|---|---|---|---|---|
+| UART | Not available | Not available | Not available | Not available |
+| SPI | Not available | Not available | Not available | Not available |
+
+The report documents DRC and GDSII preparation as implementation stages, but no clean design-specific numerical DRC/LVS result is published here.
+
+## Repository structure
 
 ```text
 uart-spi-asic-physical-design/
 ├── README.md
-├── LICENSE
-├── .gitignore
-├── docs/
-│   ├── rtl-to-gdsii.svg
-│   ├── source_reference.md
-│   └── publication_audit.md
 ├── uart/
 │   ├── rtl/
 │   ├── constraints/
 │   ├── scripts/
 │   ├── reports/
-│   ├── images/
 │   └── results/
-└── spi/
-    ├── rtl/
-    ├── constraints/
-    ├── scripts/
-    ├── reports/
-    ├── images/
-    └── results/
+├── spi/
+│   ├── rtl/
+│   ├── constraints/
+│   ├── scripts/
+│   ├── reports/
+│   └── results/
+├── scripts/
+├── docs/
+└── images/
 ```
 
-## Reproduction / Usage
+## Reproduction
 
-A full rerun is not possible from this public package alone because the original implementation depended on SCL infrastructure, proprietary PDK/library assets and Cadence installation files.
+A complete rerun requires the original SCL technology libraries/PDK, IO library, authorized Cadence installation, timing constraints, implementation database and (for SPI) the missing RTL source. These are not redistributed.
 
-The expected conceptual order is:
+The repository instead provides enough documentation and reference TCL to discuss the implementation flow technically during an interview.
 
-```text
-RTL
- ↓
-Genus synthesis + constraints
- ↓
-gate-level netlist / reports
- ↓
-Innovus initialization
- ↓
-floorplan / power plan / placement
- ↓
-CTS / routing / post-route optimization
- ↓
-timing / area / power / DRC
- ↓
-GDSII preparation
-```
+## Publication safety
 
-No complete Genus/Innovus TCL implementation scripts were supplied in the upload, so runnable scripts are not fabricated.
+Intentionally omitted:
 
-## Publication Safety
+- SCL PDKs
+- standard-cell libraries
+- IO LEF / raw IO files
+- generated DEF/GDS/database files
+- internal SCL paths and hostnames
+- SPI RTL that was not supplied
 
-PDK-specific files and raw pad-ring definitions are intentionally omitted. Sanitized screenshots are used instead of the original screenshots where workstation paths/hostnames were visible.
+See [`docs/publication_audit.md`](docs/publication_audit.md).
 
-Before public release, confirm that the internship/employer permits publication of the remaining RTL and screenshots.
+## Resume-safe description
+
+> **ASIC Physical Design — UART & SPI Controllers:** Performed Cadence Genus synthesis and Innovus physical implementation across communication-controller designs, covering floorplanning, placement, CTS, routing, post-route optimization, I/O pad integration, and area/power analysis; documented implementation evidence and reproducible flow methodology.

@@ -1,19 +1,24 @@
-# Public-Repository Publication Audit
+# Public-Repository Audit
 
-## UART included
-- Core UART Verilog RTL: `uart/rtl/`
-- Sanitized synthesis / physical-design screenshots
-- Extracted 65-pad IO-ring summary
+## Included
 
-## UART omitted
-- `uart_chip_top.v`: contains PDK-specific pad-cell names/interfaces.
-- `uart_chip_top.io` and `uart_chip_top_final.io`: raw PDK-specific pad mapping files.
-- `pdkIO.lef`: omitted because it is a PDK/IO-library artifact.
-- Raw screenshots: original copies showed internal workstation paths/hostnames.
+- Supplied UART RTL
+- Sanitized Cadence and Synopsys screenshots
+- Evidence-derived UART pad-ring summary
+- SCL-report-derived UART/SPI methodology and numerical results
+- Reconstructed Genus/Innovus reference TCL
 
-## SPI
-The report documents SPI implementation and results, but no SPI RTL, TCL scripts, standalone reports, or SPI screenshots were supplied in this upload. The SPI section therefore documents only what the supplied report supports.
+## Intentionally omitted
 
-## Publication warning
+- Raw UART `.io` files
+- PDK IO LEF (`pdkIO.lef`)
+- Standard-cell libraries
+- Cadence databases / DEF / GDS outputs
+- SCL internal paths, hostnames and infrastructure details
+- SPI RTL because it was not supplied in the current source package
 
-Cropping screenshots is only a technical sanitization measure. It does not establish legal/NDA permission. Confirm SCL/employer publication rights before pushing the repository publicly.
+## Reason
+
+The omitted items are proprietary technology collateral, generated implementation databases, internal infrastructure details, or missing source material. No missing SPI implementation is invented.
+
+The PDK-specific UART chip wrapper and IO LEF were intentionally omitted because they directly expose technology-specific pad cells. The 65-pad integration is documented textually instead.
