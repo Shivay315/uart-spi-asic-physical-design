@@ -253,6 +253,3 @@ Intentionally omitted:
 
 See [`docs/publication_audit.md`](docs/publication_audit.md).
 
-## Resume-safe description
-
-> **ASIC Physical Design — UART & SPI Controllers:** Performed Cadence Genus synthesis and Innovus physical implementation across communication-controller designs, covering floorplanning, placement, CTS, routing, post-route optimization, I/O pad integration, and area/power analysis; documented implementation evidence and reproducible flow methodology.
